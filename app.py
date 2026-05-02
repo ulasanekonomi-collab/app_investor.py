@@ -2,6 +2,8 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import io
+import matplotlib
+matplotlib.use('Agg')
 
 # PDF
 from reportlab.lib.pagesizes import letter
@@ -55,7 +57,7 @@ st.caption(f"Kepemilikan Anda: {ownership*100:.2f}% dari 1 unit vila")
 # ========================
 # CHART FUNCTIONS (SAFE)
 # ========================
-def create_sensitivity_chart():
+def create_sensitivity_chart(price, days, cost_ratio, share, ownership, investment):
     fig, ax = plt.subplots()
 
     occ_range = np.linspace(30, 90, 50)
@@ -77,7 +79,7 @@ def create_sensitivity_chart():
     return fig
 
 
-def create_distribution_chart():
+def create_distribution_chart(price, days, cost_ratio, share, ownership, investment, occupancy):
     fig, ax = plt.subplots()
 
     roi_sim = []
@@ -104,12 +106,14 @@ def create_distribution_chart():
 colA, colB = st.columns(2)
 
 with colA:
-    fig1 = create_sensitivity_chart()
+    fig1 = create_sensitivity_chart(price, days, cost_ratio, share, ownership, investment)
     st.pyplot(fig1)
     plt.close(fig1)
 
 with colB:
-    fig2, roi_sim = create_distribution_chart()
+    fig2, roi_sim = create_distribution_chart(
+    price, days, cost_ratio, share, ownership, investment, occupancy
+)
     st.pyplot(fig2)
     plt.close(fig2)
 
@@ -159,7 +163,9 @@ def create_pdf():
 
     # generate fresh charts
     fig1 = create_sensitivity_chart()
-    fig2, _ = create_distribution_chart()
+    fig2, _ = create_distribution_chart(
+    price, days, cost_ratio, share, ownership, investment, occupancy
+)
 
     img_buffer1 = io.BytesIO()
     fig1.savefig(img_buffer1, format='png')
