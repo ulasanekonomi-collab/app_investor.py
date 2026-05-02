@@ -136,25 +136,14 @@ ax2.set_xlabel("ROI (%)")
 colA, colB = st.columns(2)
 
 with colA:
-    fig1_display, ax1 = plt.subplots()
-    ax1.plot(occ_range, roi_sensitivity)
-    ax1.axhline(10, linestyle="--")
-    ax1.axhline(5, linestyle="--")
-    ax1.set_title("Sensitivity ROI")
-    ax1.set_xlabel("Occupancy (%)")
-    ax1.set_ylabel("ROI (%)")
-    
-    st.pyplot(fig1_display)
-    plt.close(fig1_display)
+    fig1 = create_sensitivity_chart()
+    st.pyplot(fig1)
+    plt.close(fig1)
 
 with colB:
-    fig2_display, ax2 = plt.subplots()
-    ax2.hist(roi_sim, bins=30)
-    ax2.axvline(np.mean(roi_sim), linestyle="--")
-    ax2.set_title("Distribusi ROI")
-    
-    st.pyplot(fig2_display)
-    plt.close(fig2_display)
+    fig2, roi_sim = create_distribution_chart()
+    st.pyplot(fig2)
+    plt.close(fig2)
 
 # ========================
 # INTERPRETASI
