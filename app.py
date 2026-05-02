@@ -4,7 +4,43 @@ import matplotlib
 matplotlib.use("Agg")  # penting untuk Streamlit Cloud
 import matplotlib.pyplot as plt
 import io
+def create_sensitivity_chart(price, days, cost_ratio, share, ownership, investment):
+    occ_range = np.linspace(30, 90, 50)
+    roi_sensitivity = []
 
+    for occ in occ_range:
+        rev = occ / 100 * price * days
+        inc = rev * (1 - cost_ratio) * (share / 100) * ownership
+        r = (inc / investment) * 100 if investment > 0 else 0
+        roi_sensitivity.append(r)
+
+    fig, ax = plt.subplots()
+    ax.plot(occ_range, roi_sensitivity)
+    ax.axhline(10, linestyle="--")
+    ax.axhline(5, linestyle="--")
+    ax.set_title("Sensitivity ROI")
+    ax.set_xlabel("Occupancy (%)")
+    ax.set_ylabel("ROI (%)")
+
+    return fig
+    def create_distribution_chart(price, days, cost_ratio, share, ownership, investment, occupancy):
+    roi_sim = []
+
+    for _ in range(1000):
+        occ_sim = np.random.normal(occupancy, 10)
+        occ_sim = max(0, min(100, occ_sim))
+
+        rev = occ_sim / 100 * price * days
+        inc = rev * (1 - cost_ratio) * (share / 100) * ownership
+        r = (inc / investment) * 100 if investment > 0 else 0
+        roi_sim.append(r)
+
+    fig, ax = plt.subplots()
+    ax.hist(roi_sim, bins=30)
+    ax.axvline(np.mean(roi_sim), linestyle="--")
+    ax.set_title("Distribusi ROI")
+
+    return fig, roi_sim
 # PDF
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
@@ -102,16 +138,12 @@ def create_distribution_chart(price, days, cost_ratio, share, ownership, investm
 colA, colB = st.columns(2)
 
 with colA:
-    fig1, roi_sens = create_sensitivity_chart(
-        price, days, cost_ratio, share, ownership, investment
-    )
+    fig1 = create_sensitivity_chart(price, days, cost_ratio, share, ownership, investment)
     st.pyplot(fig1)
     plt.close(fig1)
 
 with colB:
-    fig2, roi_sim = create_distribution_chart(
-        price, days, cost_ratio, share, ownership, investment, occupancy
-    )
+    fig2, roi_sim = create_distribution_chart(price, days, cost_ratio, share, ownership, investment, occupancy)
     st.pyplot(fig2)
     plt.close(fig2)
 
@@ -145,45 +177,42 @@ st.write(narasi)
 # ========================
 # PDF GENERATOR (SAFE)
 # ========================
-def create_pdf(price, days, cost_ratio, share, ownership, investment, occupancy):
+def create_pdf():
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
 
     content = []
+
     content.append(Paragraph("LAPORAN SIMULASI INVESTASI VILA", styles["Title"]))
     content.append(Spacer(1, 20))
 
-    # fresh charts (jangan reuse display)
-    fig1, _ = create_sensitivity_chart(
-        price, days, cost_ratio, share, ownership, investment
-    )
-    fig2, _ = create_distribution_chart(
-        price, days, cost_ratio, share, ownership, investment, occupancy
-    )
+    # generate chart baru (bukan reuse)
+    fig1 = create_sensitivity_chart(price, days, cost_ratio, share, ownership, investment)
+    fig2, _ = create_distribution_chart(price, days, cost_ratio, share, ownership, investment, occupancy)
 
-    img1 = io.BytesIO()
-    fig1.savefig(img1, format="png")
-    img1.seek(0)
+    img_buffer1 = io.BytesIO()
+    fig1.savefig(img_buffer1, format='png')
+    img_buffer1.seek(0)
     plt.close(fig1)
 
-    img2 = io.BytesIO()
-    fig2.savefig(img2, format="png")
-    img2.seek(0)
+    img_buffer2 = io.BytesIO()
+    fig2.savefig(img_buffer2, format='png')
+    img_buffer2.seek(0)
     plt.close(fig2)
 
     content.append(Paragraph("Sensitivity Analysis", styles["Heading2"]))
-    content.append(Image(img1, width=400, height=250))
+    content.append(Image(img_buffer1, width=400, height=250))
     content.append(Spacer(1, 20))
 
     content.append(Paragraph("Distribusi ROI", styles["Heading2"]))
-    content.append(Image(img2, width=400, height=250))
+    content.append(Image(img_buffer2, width=400, height=250))
 
     doc.build(content)
     buffer.seek(0)
-    return buffer
 
-pdf = create_pdf(price, days, cost_ratio, share, ownership, investment, occupancy)
+    return buffer
+pdf = create_pdf()
 
 st.download_button(
     label="📥 Download Laporan PDF",
