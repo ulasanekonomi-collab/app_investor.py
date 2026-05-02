@@ -66,13 +66,48 @@ for occ in occ_range:
     r = (inc / investment) * 100 if investment > 0 else 0
     roi_sensitivity.append(r)
 
-fig1, ax1 = plt.subplots()
-ax1.plot(occ_range, roi_sensitivity)
-ax1.axhline(10, linestyle="--")
-ax1.axhline(5, linestyle="--")
-ax1.set_title("Sensitivity ROI")
-ax1.set_xlabel("Occupancy (%)")
-ax1.set_ylabel("ROI (%)")
+def create_sensitivity_chart():
+    fig, ax = plt.subplots()
+
+    occ_range = np.linspace(30, 90, 50)
+    roi_list = []
+
+    for occ in occ_range:
+        rev = occ / 100 * price * days
+        inc = rev * (1 - cost_ratio) * (share / 100) * ownership
+        r = (inc / investment) * 100 if investment > 0 else 0
+        roi_list.append(r)
+
+    ax.plot(occ_range, roi_list)
+    ax.axhline(10, linestyle="--")
+    ax.axhline(5, linestyle="--")
+    ax.set_title("Sensitivity ROI")
+    ax.set_xlabel("Occupancy (%)")
+    ax.set_ylabel("ROI (%)")
+
+    return fig
+
+
+def create_distribution_chart():
+    fig, ax = plt.subplots()
+
+    roi_sim_local = []
+
+    for _ in range(1000):
+        occ_sim = np.random.normal(occupancy, 10)
+        occ_sim = max(0, min(100, occ_sim))
+
+        rev = occ_sim / 100 * price * days
+        inc = rev * (1 - cost_ratio) * (share / 100) * ownership
+        r = (inc / investment) * 100 if investment > 0 else 0
+        roi_sim_local.append(r)
+
+    ax.hist(roi_sim_local, bins=30)
+    ax.axvline(np.mean(roi_sim_local), linestyle="--")
+    ax.set_title("Distribusi ROI")
+    ax.set_xlabel("ROI (%)")
+
+    return fig, roi_sim_local
 
 # ========================
 # DISTRIBUTION (SIMULATION)
