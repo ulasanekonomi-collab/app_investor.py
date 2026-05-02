@@ -189,14 +189,19 @@ def create_pdf():
     content.append(Paragraph("LAPORAN SIMULASI INVESTASI VILA", styles["Title"]))
     content.append(Spacer(1, 20))
 
-    # Save charts as image
+    # Generate fresh charts (ANTI RECURSION)
+    fig1 = create_sensitivity_chart()
+    fig2, _ = create_distribution_chart()
+
     img_buffer1 = io.BytesIO()
     fig1.savefig(img_buffer1, format='png')
     img_buffer1.seek(0)
+    plt.close(fig1)
 
     img_buffer2 = io.BytesIO()
     fig2.savefig(img_buffer2, format='png')
     img_buffer2.seek(0)
+    plt.close(fig2)
 
     content.append(Paragraph("Sensitivity Analysis", styles["Heading2"]))
     content.append(Image(img_buffer1, width=400, height=250))
