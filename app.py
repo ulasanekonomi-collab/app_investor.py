@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import io
 
 # PDF
@@ -39,7 +38,6 @@ ownership = investment / unit_price if unit_price > 0 else 0
 revenue = occupancy / 100 * price * days
 income = revenue * (1 - cost_ratio) * (share / 100) * ownership
 roi = (income / investment) * 100 if investment > 0 else 0
-
 payback = investment / income if income > 0 else 0
 
 # ========================
@@ -55,17 +53,8 @@ col4.metric("Payback (tahun)", f"{payback:.1f}")
 st.caption(f"Kepemilikan Anda: {ownership*100:.2f}% dari 1 unit vila")
 
 # ========================
-# SENSITIVITY CHART
+# CHART FUNCTIONS (SAFE)
 # ========================
-occ_range = np.linspace(30, 90, 50)
-roi_sensitivity = []
-
-for occ in occ_range:
-    rev = occ / 100 * price * days
-    inc = rev * (1 - cost_ratio) * (share / 100) * ownership
-    r = (inc / investment) * 100 if investment > 0 else 0
-    roi_sensitivity.append(r)
-
 def create_sensitivity_chart():
     fig, ax = plt.subplots()
 
@@ -91,7 +80,7 @@ def create_sensitivity_chart():
 def create_distribution_chart():
     fig, ax = plt.subplots()
 
-    roi_sim_local = []
+    roi_sim = []
 
     for _ in range(1000):
         occ_sim = np.random.normal(occupancy, 10)
@@ -100,38 +89,17 @@ def create_distribution_chart():
         rev = occ_sim / 100 * price * days
         inc = rev * (1 - cost_ratio) * (share / 100) * ownership
         r = (inc / investment) * 100 if investment > 0 else 0
-        roi_sim_local.append(r)
+        roi_sim.append(r)
 
-    ax.hist(roi_sim_local, bins=30)
-    ax.axvline(np.mean(roi_sim_local), linestyle="--")
+    ax.hist(roi_sim, bins=30)
+    ax.axvline(np.mean(roi_sim), linestyle="--")
     ax.set_title("Distribusi ROI")
     ax.set_xlabel("ROI (%)")
 
-    return fig, roi_sim_local
+    return fig, roi_sim
 
 # ========================
-# DISTRIBUTION (SIMULATION)
-# ========================
-simulations = 1000
-roi_sim = []
-
-for _ in range(simulations):
-    occ_sim = np.random.normal(loc=occupancy, scale=10)
-    occ_sim = max(0, min(100, occ_sim))
-
-    rev = occ_sim / 100 * price * days
-    inc = rev * (1 - cost_ratio) * (share / 100) * ownership
-    r = (inc / investment) * 100 if investment > 0 else 0
-    roi_sim.append(r)
-
-fig2, ax2 = plt.subplots()
-ax2.hist(roi_sim, bins=30)
-ax2.axvline(np.mean(roi_sim), linestyle="--")
-ax2.set_title("Distribusi ROI")
-ax2.set_xlabel("ROI (%)")
-
-# ========================
-# DISPLAY CHART (FIX RECURSION)
+# DISPLAY CHART (ANTI ERROR)
 # ========================
 colA, colB = st.columns(2)
 
@@ -177,7 +145,7 @@ st.subheader("🧠 Narasi Otomatis")
 st.write(narasi)
 
 # ========================
-# PDF GENERATOR (GRAPH ONLY)
+# PDF GENERATOR (SAFE)
 # ========================
 def create_pdf():
     buffer = io.BytesIO()
@@ -189,7 +157,7 @@ def create_pdf():
     content.append(Paragraph("LAPORAN SIMULASI INVESTASI VILA", styles["Title"]))
     content.append(Spacer(1, 20))
 
-    # Generate fresh charts (ANTI RECURSION)
+    # generate fresh charts
     fig1 = create_sensitivity_chart()
     fig2, _ = create_distribution_chart()
 
